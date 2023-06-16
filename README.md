@@ -1,4 +1,4 @@
-# Historical Portfolio VaR Analysis
+# Portfolio VaR Analysis
 
 This is a Python code snippet for portfolio analysis. The code uses various libraries such as `pandas`, `numpy`, `matplotlib`, and `yfinance`. It retrieves historical stock data, calculates daily returns, calculates portfolio returns, and calculates the historical Value at Risk (VaR) for the portfolio.
 
@@ -176,4 +176,72 @@ This code snippet demonstrates how to calculate the Value at Risk (VaR) for the 
 
 ## Conclusion
 This code snippet demonstrates how to perform simulated Value at Risk (VaR) analysis for a portfolio. It uses simulated returns based on expected returns, volatilities, and correlation between assets. The portfolio weights are defined based on asset volatility, and the VaR is calculated using the simulated returns and portfolio weights.
+
+# Analysis of EWMA Variance of ETF Returns
+
+## Importing Required Libraries
+
+We begin by importing the necessary libraries for our analysis: pandas, matplotlib.pyplot, yfinance, sys, and seaborn.
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+import yfinance as yf
+import sys
+import seaborn as sns
+```
+
+## Importing Data
+
+```python
+TICKER = "VOO"
+data = pd.DataFrame()
+def get_data():
+    global data
+    stock = yf.Ticker(TICKER)
+    close = stock.history(start='2010-01-01', end="2022-12-31")["Close"]
+    data[f"{TICKER}"] = close
+```
+We define a function get_data() to download the historical price data using the yfinance library. It retrieves the closing prices for the specified ETF from January 1, 2010, to December 31, 2022, and stores them in the data DataFrame under the column with the ticker symbol.
+
+Next, we define a function calculate_daily_returns() to calculate the daily returns of the ETF. It adds a new column to the data DataFrame called {TICKER}_returns, which represents the percentage change in the closing prices.
+
+```python
+def calculate_daily_returns():
+    global data
+    data[f"{TICKER}_returns"] = data[f"{TICKER}"].pct_change()
+```
+
+We call the get_data() and calculate_daily_returns() functions to download the data and calculate the daily returns.
+
+Finally, we drop any rows with missing values (NaN) from the data DataFrame.
+
+```python
+get_data()
+calculate_daily_returns()
+data = data.dropna()
+```
+
+## Calculate and Plot the EWMA Variance
+We define a function calculate_ewma_variance() to calculate the exponentially weighted moving average (EWMA) variance of the ETF returns. The function takes parameters df_etf_returns (defaulting to the data DataFrame), decay_factor (defaulting to 0.94), and window (defaulting to 100).
+```python
+def calculate_ewma_variance(df_etf_returns=data[[f"{TICKER}_returns"]],
+                            decay_factor=0.94,
+                            window=100):
+    ewma = df_etf_returns.ewm(alpha=1-decay_factor,
+                              min_periods=window,
+                              adjust=False).var()
+    return ewma
+```
+Next, we define a function plot_ewma_vars_sea() to plot the EWMA variances using seaborn. It calls the calculate_ewma_variance() function twice with different decay factors to obtain two sets of variances. It then uses seaborn and matplotlib to create a line plot of the EWMA variances.
+
+```python
+def plot_ewma_vars_sea():
+    ewma_var_094 = calculate_ewma_variance(decay_factor=0.94)
+    ewma_var_097 = calculate_ewma_variance(decay_factor=0.97)
+
+    sns.set(style='darkgrid')  # Set the seaborn style
+
+    plt.figure(figsize=(15, 10))
+```
 
