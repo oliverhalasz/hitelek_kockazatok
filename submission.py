@@ -1,6 +1,3 @@
-import numpy as np
-
-
 def calculate_historical_var(portfolio_return, alpha):
     var = portfolio_return.squeeze().quantile(1 - alpha)
     return var
