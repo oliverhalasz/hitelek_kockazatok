@@ -70,19 +70,7 @@ calc_portfolio_return()
 
 The calculate_daily_returns() function calculates the daily returns for each stock in the portfolio. It uses the pct_change() function to compute the percentage change in the closing prices and stores the results in new columns in the datas DataFrame.
 
-### Calculating Portfolio Returns
-    
-```python
-def calc_portfolio_return():
-    global datas
-    datas["portfolio_return"] = 0
-    for ticker, weight in TICKERS.items():
-        datas["portfolio_return"] += weight * datas[f"{ticker}_returns"]
 
-calc_portfolio_return()
-```
-
-The calc_portfolio_return() function calculates the portfolio returns by multiplying the daily returns of each stock by its corresponding weight and summing them. The results are stored in a new column called "portfolio_return" in the datas DataFrame.
 
 ### Calculating Historical VaR
     
@@ -243,5 +231,85 @@ def plot_ewma_vars_sea():
     sns.set(style='darkgrid')  # Set the seaborn style
 
     plt.figure(figsize=(15, 10))
+    plt.plot(ewma_var_094, label='EWMA Variance (Decay Factor = 0.94)')
+    plt.plot(ewma_var_097, label='EWMA Variance (Decay Factor = 0.97)')
+    plt.xlabel('Date')
+    plt.ylabel('Variance')
+    plt.title('EWMA Variance of ETF Returns')
+    plt.legend()
+    plt.show()
+
+if __name__ == "__main__":
+    plot_ewma_vars_sea()
 ```
 
+# Analysis of Predicted vs Actual Variance
+
+## Importing Required Libraries
+
+We begin by importing the necessary libraries for our analysis: pandas, matplotlib.pyplot, sklearn.model_selection, sklearn.linear_model, and seaborn.
+
+```python
+from exc_3 import data, TICKER
+import matplotlib.pyplot as plt
+from sklearn.model_selection import cross_val_score, TimeSeriesSplit
+from sklearn.linear_model import LinearRegression
+import seaborn as sns
+```
+
+We define a function create_lagged_squared_returns() to create lagged squared returns for the specified ETF. It adds columns to the data DataFrame representing squared returns at different lags.
+
+```python
+def create_lagged_squared_returns():
+    global data
+    lags = 20
+    for i in range(1, lags + 1):
+        data[f'Lagged Squared Returns {i}'] = data[f"{TICKER}_squared_returns"].shift(i)
+    data = data.dropna()
+
+create_lagged_squared_returns()
+```
+Next, we define the dependent variable y and the independent variables X for our analysis. X is created by dropping the columns "VOO", "VOO_returns", and "VOO_squared_returns" from the data DataFrame.
+
+```python
+X = data.drop(["VOO", "VOO_returns", "VOO_squared_returns"], axis=1)
+y = data["VOO_squared_returns"]
+```
+
+We initialize a linear regression model model and a time series cross-validator tscv with 20 splits.
+
+```python
+model = LinearRegression()
+tscv = TimeSeriesSplit(n_splits=20)
+```
+We use cross-validation to evaluate the model's performance. We calculate the negative mean squared error scores for the linear regression model using the cross_val_score() function.
+
+```python
+scores = -cross_val_score(model, X, y, scoring='neg_mean_squared_error', cv=tscv)
+```
+
+Next, we fit the linear regression model to the entire dataset using the fit() method.
+We predict the variance for the entire dataset using the trained model.
+
+```python
+model.fit(X, y)
+y_pred_all = model.predict(X)
+```
+Finally, we define a function plot_predicted_vs_actual_variance2() to plot the predicted variance and actual variance over time. It uses seaborn and matplotlib to create a line plot.
+
+```python
+def plot_predicted_vs_actual_variance2(data, TICKER, y_pred_all):
+    plt.plot(data.index, data[f"{TICKER}_squared_returns"], label='Actual Variance')
+    plt.plot(data.index, y_pred_all, label='Predicted Variance')
+    plt.xlabel('Time')
+    plt.ylabel('Variance')
+    plt.title('Predicted vs Actual Variance')
+    plt.legend()
+    plt.show()
+```
+
+We call the plot_predicted_vs_actual_variance2() function to generate the plot.
+
+```python
+plot_predicted_vs_actual_variance2(data=data, TICKER=TICKER, y_pred_all=y_pred_all)
+```
