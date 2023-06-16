@@ -1,4 +1,4 @@
-# Portfolio VaR Analysis
+# Historical Portfolio VaR Analysis
 
 This is a Python code snippet for portfolio analysis. The code uses various libraries such as `pandas`, `numpy`, `matplotlib`, and `yfinance`. It retrieves historical stock data, calculates daily returns, calculates portfolio returns, and calculates the historical Value at Risk (VaR) for the portfolio.
 
